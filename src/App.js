@@ -1,8 +1,8 @@
 
 import "./App.css";
-import { LeftMenu } from "./Components/LeftMenu";
-import { MainContainer } from "./Components/MainContainer";
-import { RightMenu } from "./Components/RightMenu";
+import { LeftMenu } from "../src/Components/LeftMenu";
+import { MainContainer } from "../src/Components/MainContainer";
+import { RightMenu } from "../src/Components/RightMenu";
 
 function App() {
   return (

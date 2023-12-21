@@ -2,11 +2,11 @@
 import React from 'react';
 import { FaSpotify, FaEllipsisH } from 'react-icons/fa';
 import { BiSearchAlt} from "react-icons/bi";
-import"../Styles/LeftMenu.css";
-import { Menu } from './Menu';
-import { MenuList } from './MenuList';
-import { MenuPlayList } from './MenuPlayList';
-import { TrackList } from './TrackList';
+import"../../Styles/LeftMenu.css";
+import { Menu } from '../Menu';
+import { MenuList } from '../MenuList';
+import { MenuPlayList } from '../MenuPlayList';
+import { TrackList } from '../TrackList';
 
 function LeftMenu() {
   return (

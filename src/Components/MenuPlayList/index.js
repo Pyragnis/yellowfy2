@@ -2,7 +2,7 @@ import React from 'react'
 import { FaPlus } from 'react-icons/fa';
 import { BsMusicNoteList , BsTrash } from 'react-icons/bs'
 
-import { PlayList } from './PlayList'
+import { PlayList } from '../../Components/PlayList'
 
 function MenuPlayList() {
   return (

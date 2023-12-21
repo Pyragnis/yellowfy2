@@ -1,7 +1,7 @@
 import React from 'react'
 import { BsVolumeUpFill , BsMusicNoteList} from 'react-icons/bs';
 import {FaDesktop} from 'react-icons/fa';
-import Track from "../img/track0.jpeg";
+import Track from "../../img/track0.jpeg";
 
 function TrackList() {
   return (

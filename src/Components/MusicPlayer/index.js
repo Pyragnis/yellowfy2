@@ -2,12 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faStepBackward, faStepForward, faExpand } from '@fortawesome/free-solid-svg-icons';
+
 import ReactH5AudioPlayer from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
 
 const AudioPlayerWrapper = styled.div`
   position: relative;
-  background-color: black;
+  background-color: rgba(34, 34, 34, 0);
   color: black;
   padding: 20px;
   width: 100%;
@@ -17,7 +18,7 @@ const AudioPlayerWrapper = styled.div`
   border-radius: 33px;
 
   .rhap_container {
-    background-color: black !important;
+    background-color: rgba(34, 34, 34, 0) !important;
     color: white;
   }
 

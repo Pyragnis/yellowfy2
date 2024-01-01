@@ -14,7 +14,7 @@ function App() {
 
   return (
     <Router>
-      <div className="App flex relative w-full">
+      <div className="App flex relative w-full min-h-screen">
         <div className="background -z-1"></div>
         <Sidenav />
         <div className="overlay-container h-screen w-full">

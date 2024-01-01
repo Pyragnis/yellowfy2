@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { FaPlay } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +7,8 @@ const Albums = () => {
   const [albums, setAlbums] = useState([]);
   const [selectedAlbum, setSelectedAlbum] = useState(null);
   const [isHovered, setIsHovered] = useState(null);
+  const [loadedAlbums, setLoadedAlbums] = useState(6); // Number of albums to load initially
+  const containerRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,7 +18,6 @@ const Albums = () => {
   const getAllAlbums = async () => {
     try {
       const response = await axios.get('http://localhost:5432/albums/');
-      console.log(response.data, 'hello');
       setAlbums(response.data);
     } catch (error) {
       console.error('Error fetching albums:', error.message);
@@ -25,15 +26,41 @@ const Albums = () => {
 
   const handleAlbumClick = (album) => {
     setSelectedAlbum(album);
-    // Use navigate to go to the details page with the album id
     navigate(`/details/${album.album_id}`);
   };
 
+  const handleIntersection = (entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        // Load more albums when an album is in the viewport
+        setLoadedAlbums((prevLoadedAlbums) => prevLoadedAlbums + 1);
+      }
+    });
+  };
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(handleIntersection, {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.5, // Trigger when 50% of the album is in the viewport
+    });
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      if (containerRef.current) {
+        observer.unobserve(containerRef.current);
+      }
+    };
+  }, [loadedAlbums]); // Re-run the effect when more albums are loaded
+
   return (
-    <div className="bg-black bg-opacity-80 h-screen w-full p-8">
+    <div className="bg-black bg-opacity-80 min-h-screen w-full p-8">
       <h2 className="text-2xl font-bold mb-4 text-white">Albums</h2>
-      <div className="grid grid-cols-3 gap-8">
-        {albums.map((album) => (
+      <div className="grid grid-cols-3 gap-8" ref={containerRef}>
+        {albums.slice(0, loadedAlbums).map((album) => (
           <div
             key={album.album_id}
             className="relative group cursor-pointer p-4 bg-gray-700 bg-opacity-50 rounded-lg transition-opacity"

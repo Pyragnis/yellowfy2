@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
-import AudioPlayer from 'react-h5-audio-player';
+import React, { useState, useEffect } from 'react';
+import AudioPlayer, { RHAP_UI } from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
-import { FaExpand, FaCompress } from 'react-icons/fa';
+import { FaExpand, FaCompress, FaStepBackward, FaStepForward } from 'react-icons/fa';
 
-const Player = ({ songUrl, imageUrl }) => {
+const Player = ({ musicArray, selectedMusicId, Imageurl }) => {
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [selectedMusic, setSelectedMusic] = useState(null);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    setSelectedMusic(musicArray.find((music) => music.music_id === selectedMusicId));
+  }, [musicArray, selectedMusicId]);
 
   const toggleFullScreen = () => {
     const playerContainer = document.getElementById('player-container');
@@ -12,10 +18,8 @@ const Player = ({ songUrl, imageUrl }) => {
     if (playerContainer) {
       try {
         if (!document.fullscreenElement) {
-          // Enter fullscreen
           playerContainer.requestFullscreen();
         } else {
-          // Exit fullscreen
           document.exitFullscreen();
         }
 
@@ -28,6 +32,19 @@ const Player = ({ songUrl, imageUrl }) => {
     }
   };
 
+  const handleMusicChange = (direction) => {
+    const currentIndex = musicArray.findIndex((music) => music.music_id === selectedMusicId);
+    const newIndex =
+      direction === 'next' ? (currentIndex + 1) % musicArray.length : (currentIndex - 1 + musicArray.length) % musicArray.length;
+
+    // Handle music change logic here
+    console.log('Changing music to:', musicArray[newIndex].music_id);
+  };
+
+  const handleProgress = (e) => {
+    setProgress(e.target.currentTime / e.target.duration);
+  };
+
   return (
     <div
       id="player-container"
@@ -36,15 +53,17 @@ const Player = ({ songUrl, imageUrl }) => {
       {isFullScreen && (
         <div
           className="absolute top-0 left-0 w-full h-full bg-cover bg-center"
-          style={{ backgroundImage: `url(${imageUrl})` }}
+          style={{ backgroundImage: `url(${selectedMusic.imageUrl})` }}
         ></div>
       )}
 
       <AudioPlayer
         autoPlay
-        src={songUrl}
+        src={selectedMusic ? selectedMusic.musicUrl : ''}
         onPlay={(e) => console.log('onPlay')}
-        // other props here
+        onTimeUpdate={handleProgress}
+        onEnded={() => handleMusicChange('next')}
+        onPause={() => handleMusicChange('next')}
         className={`${
           isFullScreen ? 'rounded-none' : 'rounded-lg'
         } bg-black bg-opacity-70 overflow-hidden relative`}
@@ -56,7 +75,7 @@ const Player = ({ songUrl, imageUrl }) => {
         header={
           <div className="relative w-full h-72 overflow-hidden">
             <img
-              src={imageUrl}
+              src={Imageurl}
               alt="Song Cover"
               className={`w-full h-full object-cover ${isFullScreen ? 'max-h-full' : ''}`}
             />
@@ -64,9 +83,23 @@ const Player = ({ songUrl, imageUrl }) => {
           </div>
         }
         layout="stacked-reverse"
+        customControls={[
+          'play',
+          'time_and_duration',
+          'seekbar',
+          'volume',
+          'spacer',
+          'name',
+          'custom-additional-controls',
+        ]}
+        customProgressBarSection={[
+          RHAP_UI.PROGRESS_BAR,
+          <div key="progress" className="text-white mx-2">
+            {`${Math.floor(progress * 100)}%`}
+          </div>,
+        ]}
       />
 
-      {/* Hide the image inside controls div */}
       <style>
         {`
           .rhap_header {

@@ -99,6 +99,7 @@ const DetailsAlbum = () => {
             <Player
               musicArray={albumDetails.Music}
               selectedMusicId={selectedMusicId}
+              imageurl= {albumDetails.albumCoverImageUrl}
             />
           )}
         </>

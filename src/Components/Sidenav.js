@@ -20,8 +20,8 @@ const MenuList = [
   {
     id: 3,
     icon: <FaBroadcastTower />,
-    name: "Radio",
-    path: "/albums",
+    name: "musics",
+    path: "/musics",
   },
   {
     id: 4,
@@ -32,8 +32,8 @@ const MenuList = [
   {
     id: 5,
     icon: <FaPodcast />,
-    name: "Podcasts",
-    path: "/podcasts",
+    name: "Paired listening",
+    path: "/rooms",
   },
 ];
 

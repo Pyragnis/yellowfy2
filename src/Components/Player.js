@@ -1,128 +1,113 @@
 import React, { useState, useEffect } from 'react';
 import AudioPlayer, { RHAP_UI } from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
-import { FaExpand, FaCompress, FaStepBackward, FaStepForward } from 'react-icons/fa';
+import { FaExpand, FaCompress, FaStepBackward, FaStepForward, FaTimes, FaPlay, FaPause } from 'react-icons/fa';
+import '../Styles/player.css';
 
-const Player = ({ musicArray, selectedMusicId, Imageurl }) => {
+const Player = ({ musicArray, selectedMusicId, imageurl, onClose }) => {
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [selectedMusic, setSelectedMusic] = useState(null);
-  const [progress, setProgress] = useState(0);
+  const [selectedMusicIndex, setSelectedMusicIndex] = useState(musicArray.findIndex(music => music.music_id === selectedMusicId));
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [totalDuration, setTotalDuration] = useState(0);
 
   useEffect(() => {
-    setSelectedMusic(musicArray.find((music) => music.music_id === selectedMusicId));
+    setSelectedMusicIndex(musicArray.findIndex(music => music.music_id === selectedMusicId));
   }, [musicArray, selectedMusicId]);
 
   const toggleFullScreen = () => {
     const playerContainer = document.getElementById('player-container');
-
-    if (playerContainer) {
-      try {
-        if (!document.fullscreenElement) {
-          playerContainer.requestFullscreen();
-        } else {
-          document.exitFullscreen();
-        }
-
-        setIsFullScreen(!isFullScreen);
-      } catch (error) {
-        console.error('Fullscreen API error:', error.message);
-      }
+    if (!document.fullscreenElement) {
+      playerContainer.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+      });
     } else {
-      console.error('Player container not found.');
+      document.exitFullscreen();
     }
   };
 
+  useEffect(() => {
+    const handleFullScreenChange = () => {
+      setIsFullScreen(document.fullscreenElement != null);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullScreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullScreenChange);
+    };
+  }, []);
+
   const handleMusicChange = (direction) => {
-    const currentIndex = musicArray.findIndex((music) => music.music_id === selectedMusicId);
-    const newIndex =
-      direction === 'next' ? (currentIndex + 1) % musicArray.length : (currentIndex - 1 + musicArray.length) % musicArray.length;
-
-    // Handle music change logic here
-    console.log('Changing music to:', musicArray[newIndex].music_id);
+    let newIndex = direction === 'next' ? (selectedMusicIndex + 1) % musicArray.length : (selectedMusicIndex - 1 + musicArray.length) % musicArray.length;
+    setSelectedMusicIndex(newIndex);
   };
 
-  const handleProgress = (e) => {
-    setProgress(e.target.currentTime / e.target.duration);
+  const handleListen = (e) => {
+    setCurrentTime(e.target.currentTime);
+    setTotalDuration(e.target.duration);
   };
+
+  const formatTime = (seconds) => {
+    const rounded = Math.floor(seconds);
+    const minutes = Math.floor(rounded / 60);
+    const remainingSeconds = rounded % 60;
+    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+  };
+
+  const selectedMusic = musicArray[selectedMusicIndex] || {};
 
   return (
-    <div
-      id="player-container"
-      className={`max-w-screen-md mx-auto ${isFullScreen ? 'fixed top-0 left-0 w-full h-full z-50' : ''}`}
-    >
+    <div id="player-container" className={`flex flex-col items-center justify-center fixed top-0 left-0 w-full h-full z-50 ${isFullScreen ? 'full-screen' : ''}`} style={{ background: 'rgba(0, 0, 0, 0.7)' }}>
+      <button onClick={onClose} className="absolute top-5 right-5 focus:outline-none">
+        <FaTimes className="text-white text-xl" />
+      </button>
       {isFullScreen && (
-        <div
-          className="absolute top-0 left-0 w-full h-full bg-cover bg-center"
-          style={{ backgroundImage: `url(${selectedMusic.imageUrl})` }}
-        ></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-cover bg-center" style={{ backgroundImage: `url(${imageurl})`, filter: 'brightness(50%)' }}></div>
       )}
 
       <AudioPlayer
         autoPlay
-        src={selectedMusic ? selectedMusic.musicUrl : ''}
-        onPlay={(e) => console.log('onPlay')}
-        onTimeUpdate={handleProgress}
+        src={selectedMusic.musicUrl || selectedMusic.url}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
         onEnded={() => handleMusicChange('next')}
-        onPause={() => handleMusicChange('next')}
-        className={`${
-          isFullScreen ? 'rounded-none' : 'rounded-lg'
-        } bg-black bg-opacity-70 overflow-hidden relative`}
+        onListen={handleListen}
+        showSkipControls={true}
+        onClickPrevious={() => handleMusicChange('prev')}
+        onClickNext={() => handleMusicChange('next')}
+        className={`${isFullScreen ? 'rounded-none' : 'rounded-lg'} bg-transparent overflow-hidden relative`}
+        customProgressBarSection={[
+          RHAP_UI.PROGRESS_BAR,
+          <div key="current-time" className="text-white mx-2">{formatTime(currentTime)}</div>,
+          RHAP_UI.DURATION,
+          <div key="total-duration" className="text-white mx-2">{formatTime(totalDuration)}</div>
+        ]}
         customAdditionalControls={[
+          // <button key="prev" onClick={() => handleMusicChange('prev')} className="focus:outline-none">
+          //   <FaStepBackward className="text-white text-xl" />
+          // </button>,
+          // isPlaying
+          //   ? <button key="pause" onClick={() => setIsPlaying(false)} className="focus:outline-none">
+          //       <FaPause className="text-white text-xl" />
+          //     </button>
+          //   : <button key="play" onClick={() => setIsPlaying(true)} className="focus:outline-none">
+          //       <FaPlay className="text-white text-xl" />
+          //     </button>,
+          // <button key="next" onClick={() => handleMusicChange('next')} className="focus:outline-none">
+          //   <FaStepForward className="text-white text-xl" />
+          // </button>,
           <button key="fullscreen" onClick={toggleFullScreen} className="focus:outline-none">
-            {isFullScreen ? <FaCompress className="text-yellow-500 text-xl" /> : <FaExpand className="text-yellow-500 text-xl" />}
-          </button>,
+            {isFullScreen ? <FaCompress className="text-yellow-500 text-2xl" /> : <FaExpand className="text-yellow-500 text-xl" />}
+          </button>
         ]}
         header={
           <div className="relative w-full h-72 overflow-hidden">
-            <img
-              src={Imageurl}
-              alt="Song Cover"
-              className={`w-full h-full object-cover ${isFullScreen ? 'max-h-full' : ''}`}
-            />
+            <img src={imageurl} alt="Album Cover" className={`w-full h-full object-cover ${isFullScreen ? 'max-h-full' : ''}`} />
             {isFullScreen && <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-50"></div>}
           </div>
         }
         layout="stacked-reverse"
-        customControls={[
-          'play',
-          'time_and_duration',
-          'seekbar',
-          'volume',
-          'spacer',
-          'name',
-          'custom-additional-controls',
-        ]}
-        customProgressBarSection={[
-          RHAP_UI.PROGRESS_BAR,
-          <div key="progress" className="text-white mx-2">
-            {`${Math.floor(progress * 100)}%`}
-          </div>,
-        ]}
       />
-
-      <style>
-        {`
-          .rhap_header {
-            background: none !important;
-          }
-          .rhap_main-controls {
-            background: rgba(0, 0, 0, 0.7) !important;
-            border-radius: 8px;
-            padding: 8px;
-          }
-          .rhap_additional-controls {
-            background: none !important;
-          }
-          .rhap_progress-section {
-            background: none !important;
-          }
-          .rhap_container {
-            background-color: rgba(34, 34, 34, 0.7) !important;
-            border-radius: 8px;
-            color: white;
-          }
-        `}
-      </style>
     </div>
   );
 };

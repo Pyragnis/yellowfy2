@@ -7,7 +7,7 @@ const Albums = () => {
   const [albums, setAlbums] = useState([]);
   const [selectedAlbum, setSelectedAlbum] = useState(null);
   const [isHovered, setIsHovered] = useState(null);
-  const [loadedAlbums, setLoadedAlbums] = useState(6); // Number of albums to load initially
+  const [loadedAlbums, setLoadedAlbums] = useState(6); 
   const containerRef = useRef(null);
   const navigate = useNavigate();
 
@@ -17,7 +17,7 @@ const Albums = () => {
 
   const getAllAlbums = async () => {
     try {
-      const response = await axios.get('http://localhost:5432/albums/');
+      const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/albums/`);
       setAlbums(response.data);
     } catch (error) {
       console.error('Error fetching albums:', error.message);
@@ -32,7 +32,6 @@ const Albums = () => {
   const handleIntersection = (entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
-        // Load more albums when an album is in the viewport
         setLoadedAlbums((prevLoadedAlbums) => prevLoadedAlbums + 1);
       }
     });
@@ -42,7 +41,7 @@ const Albums = () => {
     const observer = new IntersectionObserver(handleIntersection, {
       root: null,
       rootMargin: '0px',
-      threshold: 0.5, // Trigger when 50% of the album is in the viewport
+      threshold: 0.5, 
     });
 
     if (containerRef.current) {
@@ -54,7 +53,7 @@ const Albums = () => {
         observer.unobserve(containerRef.current);
       }
     };
-  }, [loadedAlbums]); // Re-run the effect when more albums are loaded
+  }, [loadedAlbums]); 
 
   return (
     <div className="bg-black bg-opacity-80 min-h-screen w-full p-8">

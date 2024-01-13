@@ -13,7 +13,7 @@ const DetailsAlbum = () => {
   useEffect(() => {
     const fetchAlbumDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:5432/albums/${albumId}`);
+        const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/albums/${albumId}`);
         setAlbumDetails(response.data);
       } catch (error) {
         console.error('Error fetching album details:', error.message);
@@ -46,8 +46,12 @@ const DetailsAlbum = () => {
     setSelectedMusicId(musicId);
   };
 
+  const handleClosePlayer = () => {
+    setSelectedMusicId(null);
+  };
+
   return (
-    <div className="bg-black bg-opacity-80 h-screen w-full p-8 text-white">
+    <div className="relative bg-black bg-opacity-80 h-screen w-full p-8 text-white">
       {albumDetails ? (
         <>
           <img src={albumDetails.albumCoverImageUrl} alt={albumDetails.title} className="w-32 h-32 object-cover rounded-lg mb-4" />
@@ -78,7 +82,7 @@ const DetailsAlbum = () => {
                           >
                             <div className="flex items-center">
                               <FaPlay
-                                className="text-yellow-500 mr-4"
+                                className="text-yellow-500 mr-4 cursor-pointer"
                                 onClick={() => handlePlayClick(music.music_id)}
                               />
                               {music.title}
@@ -96,11 +100,14 @@ const DetailsAlbum = () => {
           </div>
 
           {selectedMusicId && (
-            <Player
-              musicArray={albumDetails.Music}
-              selectedMusicId={selectedMusicId}
-              imageurl= {albumDetails.albumCoverImageUrl}
-            />
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+              <Player
+                musicArray={albumDetails.Music}
+                selectedMusicId={selectedMusicId}
+                imageurl={albumDetails.albumCoverImageUrl}
+                onClose={handleClosePlayer}
+              />
+            </div>
           )}
         </>
       ) : (

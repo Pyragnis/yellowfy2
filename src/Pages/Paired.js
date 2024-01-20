@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
-import { joinRoom, leaveRoom, userJoined, userLeft } from '../redux/reducers/socketReducer'; // Update this path according to your project structure
+import { joinRoom, leaveRoom, userJoined, userLeft } from '../redux/reducers/socketReducer';
 
 let socket;
 
@@ -10,7 +10,7 @@ const Paired = () => {
   const [roomInput, setRoomInput] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const dispatch = useDispatch();
-  const { roomId, usersInRoom } = useSelector(state => state.socket);
+  const { roomId, usersInRoom } = useSelector((state) => state.socket);
 
   useEffect(() => {
     socket = io.connect(`${process.env.REACT_APP_BASE_URL}`, { reconnection: false });
@@ -21,14 +21,16 @@ const Paired = () => {
 
     socket.on('disconnect', () => {
       setIsConnected(false);
+      dispatch(leaveRoom());
     });
 
-    socket.on('userJoined', (userId) => {
-      if (userId !== socket.id) {
-        toast.success(`User ${userId} joined the room`);
-        dispatch(userJoined(userId));
+    socket.on('roomUpdate', (data) => {
+      if (data && data.users) {
+        const updatedUsers = data.users;
+        dispatch(userJoined(updatedUsers));
       }
     });
+    
 
     socket.on('userLeft', (userId) => {
       toast.error(`User ${userId} left the room`);
@@ -38,7 +40,7 @@ const Paired = () => {
     return () => {
       socket.off('connect');
       socket.off('disconnect');
-      socket.off('userJoined');
+      socket.off('roomUpdate');
       socket.off('userLeft');
     };
   }, [dispatch]);
@@ -63,6 +65,14 @@ const Paired = () => {
     dispatch(joinRoom(newRoomId));
   };
 
+  const handleLeaveRoom = () => {
+    if (roomId) {
+      socket.emit('leaveRoom', roomId);
+      dispatch(leaveRoom());
+      toast.success('You left the room');
+    }
+  };
+
   const handleReconnect = () => {
     socket.connect();
   };
@@ -78,14 +88,14 @@ const Paired = () => {
           placeholder="Enter Room ID"
           className="p-2 rounded-l-md focus:outline-none focus:ring focus:border-blue-300"
         />
-        <button 
+        <button
           onClick={handleJoinRoom}
           className="bg-yellow-500 text-white px-4 rounded-r-md hover:bg-yellow-600"
         >
           Join Room
         </button>
       </div>
-      <button 
+      <button
         onClick={handleCreateRoom}
         className="bg-yellow-500 text-white px-6 py-2 rounded-md hover:bg-yellow-600"
       >
@@ -94,6 +104,12 @@ const Paired = () => {
       {roomId && (
         <div>
           <p className="text-white mt-4">Currently in room: {roomId}</p>
+          <button
+            onClick={handleLeaveRoom}
+            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 mt-2"
+          >
+            Leave Room
+          </button>
           <div className="mt-4">
             <p className="text-white">Users in Room:</p>
             {usersInRoom.map((user, index) => (
@@ -102,11 +118,11 @@ const Paired = () => {
           </div>
         </div>
       )}
-      {!isConnected && 
+      {!isConnected && (
         <button onClick={handleReconnect} className="bg-blue-500 text-white px-4 py-2 rounded-md mt-4">
           Reconnect
         </button>
-      }
+      )}
     </div>
   );
 };

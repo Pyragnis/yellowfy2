@@ -1,24 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import AudioPlayer, { RHAP_UI } from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
-import { FaExpand, FaCompress, FaStepBackward, FaStepForward, FaTimes, FaPlay, FaPause } from 'react-icons/fa';
+import { FaExpand, FaCompress, FaTimes } from 'react-icons/fa';
 import '../Styles/player.css';
+import io from 'socket.io-client'; // Import Socket.io
 
-const Player = ({ musicArray, selectedMusicId, imageurl, onClose }) => {
+const Player = ({ musicArray, selectedMusicId, imageurl, onClose, roomId }) => {
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [selectedMusicIndex, setSelectedMusicIndex] = useState(musicArray.findIndex(music => music.music_id === selectedMusicId));
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [selectedMusicIndex, setSelectedMusicIndex] = useState(
+    musicArray.findIndex((music) => music.music_id === selectedMusicId)
+  );
   const [currentTime, setCurrentTime] = useState(0);
   const [totalDuration, setTotalDuration] = useState(0);
 
   useEffect(() => {
-    setSelectedMusicIndex(musicArray.findIndex(music => music.music_id === selectedMusicId));
+    setSelectedMusicIndex(
+      musicArray.findIndex((music) => music.music_id === selectedMusicId)
+    );
   }, [musicArray, selectedMusicId]);
 
   const toggleFullScreen = () => {
     const playerContainer = document.getElementById('player-container');
     if (!document.fullscreenElement) {
-      playerContainer.requestFullscreen().catch(err => {
+      playerContainer.requestFullscreen().catch((err) => {
         console.error(`Error attempting to enable full-screen mode: ${err.message}`);
       });
     } else {
@@ -38,13 +42,22 @@ const Player = ({ musicArray, selectedMusicId, imageurl, onClose }) => {
   }, []);
 
   const handleMusicChange = (direction) => {
-    let newIndex = direction === 'next' ? (selectedMusicIndex + 1) % musicArray.length : (selectedMusicIndex - 1 + musicArray.length) % musicArray.length;
+    let newIndex =
+      direction === 'next'
+        ? (selectedMusicIndex + 1) % musicArray.length
+        : (selectedMusicIndex - 1 + musicArray.length) % musicArray.length;
     setSelectedMusicIndex(newIndex);
+
+    // Emit a socket event for changing the track with the roomId
+    socket.emit('changeTrack', roomId, musicArray[newIndex].music_id);
   };
 
   const handleListen = (e) => {
     setCurrentTime(e.target.currentTime);
     setTotalDuration(e.target.duration);
+    
+    // Emit a socket event for seeking with the roomId
+    socket.emit('seek', roomId, e.target.currentTime);
   };
 
   const formatTime = (seconds) => {
@@ -56,21 +69,30 @@ const Player = ({ musicArray, selectedMusicId, imageurl, onClose }) => {
 
   const selectedMusic = musicArray[selectedMusicIndex] || {};
 
+  // Initialize Socket.io connection
+  const socket = io(process.env.REACT_APP_SOCKET_SERVER_URL);
+
   return (
-    <div id="player-container" className={`flex flex-col items-center justify-center fixed top-0 left-0 w-full h-full z-50 ${isFullScreen ? 'full-screen' : ''}`} style={{ background: 'rgba(0, 0, 0, 0.7)' }}>
+    <div
+      id="player-container"
+      className={`flex flex-col items-center justify-center fixed top-0 left-0 w-full h-full z-50 ${
+        isFullScreen ? 'full-screen' : ''
+      }`}
+      style={{ background: 'rgba(0, 0, 0, 0.7)' }}
+    >
       <button onClick={onClose} className="absolute top-5 right-5 focus:outline-none">
         <FaTimes className="text-white text-xl" />
       </button>
       {isFullScreen && (
-        <div className="absolute top-0 left-0 w-full h-full bg-cover bg-center" style={{ backgroundImage: `url(${imageurl})`, filter: 'brightness(50%)' }}></div>
+        <div
+          className="absolute top-0 left-0 w-full h-full bg-cover bg-center"
+          style={{ backgroundImage: `url(${imageurl})`, filter: 'brightness(50%)' }}
+        ></div>
       )}
 
       <AudioPlayer
         autoPlay
         src={selectedMusic.musicUrl || selectedMusic.url}
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-        onEnded={() => handleMusicChange('next')}
         onListen={handleListen}
         showSkipControls={true}
         onClickPrevious={() => handleMusicChange('prev')}
@@ -78,24 +100,15 @@ const Player = ({ musicArray, selectedMusicId, imageurl, onClose }) => {
         className={`${isFullScreen ? 'rounded-none' : 'rounded-lg'} bg-transparent overflow-hidden relative`}
         customProgressBarSection={[
           RHAP_UI.PROGRESS_BAR,
-          <div key="current-time" className="text-white mx-2">{formatTime(currentTime)}</div>,
+          <div key="current-time" className="text-white mx-2">
+            {formatTime(currentTime)}
+          </div>,
           RHAP_UI.DURATION,
-          <div key="total-duration" className="text-white mx-2">{formatTime(totalDuration)}</div>
+          <div key="total-duration" className="text-white mx-2">
+            {formatTime(totalDuration)}
+          </div>
         ]}
         customAdditionalControls={[
-          // <button key="prev" onClick={() => handleMusicChange('prev')} className="focus:outline-none">
-          //   <FaStepBackward className="text-white text-xl" />
-          // </button>,
-          // isPlaying
-          //   ? <button key="pause" onClick={() => setIsPlaying(false)} className="focus:outline-none">
-          //       <FaPause className="text-white text-xl" />
-          //     </button>
-          //   : <button key="play" onClick={() => setIsPlaying(true)} className="focus:outline-none">
-          //       <FaPlay className="text-white text-xl" />
-          //     </button>,
-          // <button key="next" onClick={() => handleMusicChange('next')} className="focus:outline-none">
-          //   <FaStepForward className="text-white text-xl" />
-          // </button>,
           <button key="fullscreen" onClick={toggleFullScreen} className="focus:outline-none">
             {isFullScreen ? <FaCompress className="text-yellow-500 text-2xl" /> : <FaExpand className="text-yellow-500 text-xl" />}
           </button>

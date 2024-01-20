@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { FaSearch, FaCompactDisc, FaTrashAlt, FaPlus } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import { setSearchQuery } from '../redux/reducers/searchReducer';
 import Logo from '../img/logo.jpeg';
-import { FaEllipsisH, FaSearch, FaCompactDisc, FaTrashAlt, FaPlus, FaMicrophoneAlt, FaPodcast, FaBroadcastTower } from 'react-icons/fa';
+import { FaEllipsisH, FaMicrophoneAlt, FaPodcast, FaBroadcastTower } from 'react-icons/fa';
 import { BsFillHouseFill, BsJournalAlbum } from 'react-icons/bs';
 
 const MenuList = [
@@ -46,7 +49,17 @@ const playlistItems = [
   { id: 6, name: 'Rap' },
 ];
 
+
+
 const Sidenav = () => {
+  const dispatch = useDispatch();
+  const searchQuery = useSelector((state) => state.search.searchQuery); // Get searchQuery from Redux store
+
+  const handleSearchInputChange = (event) => {
+    const query = event.target.value;
+    dispatch(setSearchQuery(query)); // Dispatch the setSearchQuery action to update the search query
+  };
+
   return (
     <div className='z-2 h-screen w-[300px] bg-black bg-opacity-70 text-white p-4'>
       <div className='flex flex-row justify-between items-center mb-4'>
@@ -61,6 +74,8 @@ const Sidenav = () => {
           type='text'
           placeholder='Que souhaitez-vous écouter?'
           className='bg-black bg-opacity-50 text-white p-2 pl-8 w-full rounded'
+          value={searchQuery} // Bind the searchQuery from Redux store to the input value
+          onChange={handleSearchInputChange} // Handle input change to update searchQuery
         />
         <FaSearch className='absolute left-2 top-1/2 transform -translate-y-1/2 text-yellow-500 text-xl' />
       </div>

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { FaPlay } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux'; // Import useSelector from react-redux
+import { setSearchQuery } from '../redux/reducers/searchReducer'; // Import the setSearchQuery action
 
 const Albums = () => {
   const [albums, setAlbums] = useState([]);
@@ -10,6 +12,8 @@ const Albums = () => {
   const [loadedAlbums, setLoadedAlbums] = useState(6); 
   const containerRef = useRef(null);
   const navigate = useNavigate();
+  
+  const searchQuery = useSelector((state) => state.search.searchQuery); // Get searchQuery from Redux store
 
   useEffect(() => {
     getAllAlbums();
@@ -55,11 +59,16 @@ const Albums = () => {
     };
   }, [loadedAlbums]); 
 
+  // Filter albums based on searchQuery
+  const filteredAlbums = albums.filter((album) =>
+    album.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="bg-black bg-opacity-80 min-h-screen w-full p-8">
       <h2 className="text-2xl font-bold mb-4 text-white">Albums</h2>
       <div className="grid grid-cols-3 gap-8" ref={containerRef}>
-        {albums.slice(0, loadedAlbums).map((album) => (
+        {filteredAlbums.slice(0, loadedAlbums).map((album) => (
           <div
             key={album.album_id}
             className="relative group cursor-pointer p-4 bg-gray-700 bg-opacity-50 rounded-lg transition-opacity"

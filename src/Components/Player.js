@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AudioPlayer, { RHAP_UI } from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
-import { FaExpand, FaCompress, FaTimes } from 'react-icons/fa';
+import { FaExpand, FaCompress, FaTimes } from 'react-icons/fa'; // Add icons for fullscreen
 import '../Styles/player.css';
 import io from 'socket.io-client'; // Import Socket.io
 
@@ -103,22 +103,21 @@ const Player = ({ musicArray, selectedMusicId, imageurl, onClose, roomId }) => {
           <div key="current-time" className="text-white mx-2">
             {formatTime(currentTime)}
           </div>,
-          RHAP_UI.DURATION,
-          <div key="total-duration" className="text-white mx-2">
-            {formatTime(totalDuration)}
-          </div>
+          // RHAP_UI.DURATION,
+          // <div key="total-duration" className="text-white mx-2">
+          //   {formatTime(totalDuration)}
+          // </div>
         ]}
         customAdditionalControls={[
           <button key="fullscreen" onClick={toggleFullScreen} className="focus:outline-none">
             {isFullScreen ? <FaCompress className="text-yellow-500 text-2xl" /> : <FaExpand className="text-yellow-500 text-xl" />}
           </button>
         ]}
-        header={
+        header={isFullScreen ? null : ( // Hide the player image in fullscreen
           <div className="relative w-full h-72 overflow-hidden">
-            <img src={imageurl} alt="Album Cover" className={`w-full h-full object-cover ${isFullScreen ? 'max-h-full' : ''}`} />
-            {isFullScreen && <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-50"></div>}
+            <img src={imageurl} alt="Album Cover" className={`w-full h-full object-cover`} />
           </div>
-        }
+        )}
         layout="stacked-reverse"
       />
     </div>

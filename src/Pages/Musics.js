@@ -127,9 +127,11 @@ const Musics = () => {
   }, [roomId]);
 
   // Filter musics based on searchQuery
-  const filteredMusics = musics.filter((music) =>
-    music.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredMusics = searchQuery
+    ? musics.filter((music) =>
+        music.title.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : musics;
 
   return (
     <>
@@ -148,16 +150,15 @@ const Musics = () => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {musicOrder.map((musicId, index) => {
-            const music = musics.find((m) => m.music_id === musicId);
+          {filteredMusics.map((music) => {
             return (
               <div
-                key={musicId}
+                key={music.music_id}
                 className="bg-gray-800 bg-opacity-80 p-4 rounded-lg"
                 draggable="true"
-                onDragStart={(e) => handleDragStart(e, musicId)}
+                onDragStart={(e) => handleDragStart(e, music.music_id)}
                 onDragOver={(e) => handleDragOver(e)}
-                onDrop={(e) => handleDrop(e, musicId)}
+                onDrop={(e) => handleDrop(e, music.music_id)}
               >
                 <img
                   src={music.albumCoverImageUrl || 'default-cover-url.jpg'}

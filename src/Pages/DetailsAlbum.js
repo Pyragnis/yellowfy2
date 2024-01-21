@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FaPlay } from 'react-icons/fa';
 import { useParams } from 'react-router-dom';
+import { useSelector } from 'react-redux'; // Import useSelector for accessing Redux state
 import Player from '../Components/Player';
 
 const DetailsAlbum = () => {
@@ -9,6 +10,7 @@ const DetailsAlbum = () => {
   const [albumDetails, setAlbumDetails] = useState(null);
   const [selectedMusicId, setSelectedMusicId] = useState(null);
   const [musicOrder, setMusicOrder] = useState([]);
+  const searchQuery = useSelector((state) => state.search.searchQuery); // Get searchQuery from Redux store
 
   useEffect(() => {
     const fetchAlbumDetails = async () => {
@@ -57,6 +59,13 @@ const DetailsAlbum = () => {
     setSelectedMusicId(null);
   };
 
+  // Filter musics based on searchQuery
+  const filteredMusics = albumDetails
+    ? albumDetails.Music.filter((music) =>
+        music.title.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
+
   return (
     <div className="relative bg-black bg-opacity-80 h-screen w-full p-8 text-white">
       {albumDetails ? (
@@ -72,20 +81,19 @@ const DetailsAlbum = () => {
             <p>{albumDetails.Artist.bio}</p>
           </div>
 
-          <div className="mt-8">
+          <div className="mt-8 max-h-72 overflow-y-auto"> 
             <h3 className="text-xl font-bold mb-4">Album Music</h3>
             <div
               onDragOver={(e) => handleDragOver(e)}
               onDrop={(e) => handleDrop(e, 'musicList')}
             >
-              {musicOrder.map((musicId, index) => {
-                const music = albumDetails.Music.find((m) => m.music_id === musicId);
+              {filteredMusics.map((music, index) => {
                 return (
                   <div
-                    key={musicId}
+                    key={music.music_id}
                     className="flex items-center justify-between p-4 bg-gray-700 bg-opacity-50 rounded-lg mb-2"
                     draggable="true"
-                    onDragStart={(e) => handleDragStart(e, musicId)}
+                    onDragStart={(e) => handleDragStart(e, music.music_id)}
                   >
                     <FaPlay
                       className="text-yellow-500 mr-4 cursor-pointer"

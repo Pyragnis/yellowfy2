@@ -2,19 +2,20 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FaPlay } from 'react-icons/fa';
 import { useParams } from 'react-router-dom';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import Player from '../Components/Player';
 
 const DetailsAlbum = () => {
   const { albumId } = useParams();
   const [albumDetails, setAlbumDetails] = useState(null);
   const [selectedMusicId, setSelectedMusicId] = useState(null);
+  const [musicOrder, setMusicOrder] = useState([]);
 
   useEffect(() => {
     const fetchAlbumDetails = async () => {
       try {
         const response = await axios.get(`${process.env.REACT_APP_BASE_URL}/albums/${albumId}`);
         setAlbumDetails(response.data);
+        setMusicOrder(response.data.Music.map((music) => music.music_id)); // Set the initial music order
       } catch (error) {
         console.error('Error fetching album details:', error.message);
       }
@@ -23,23 +24,29 @@ const DetailsAlbum = () => {
     fetchAlbumDetails();
   }, [albumId]);
 
-  const onDragEnd = (result) => {
-    if (!result.destination) {
-      return; // The item was dropped outside the list
-    }
+  const handleDragStart = (e, musicId) => {
+    e.dataTransfer.setData('text/plain', musicId);
+  };
 
-    const startIndex = result.source.index;
-    const endIndex = result.destination.index;
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
 
-    const updatedMusic = Array.from(albumDetails.Music);
-    const [removed] = updatedMusic.splice(startIndex, 1);
-    updatedMusic.splice(endIndex, 0, removed);
+  const handleDrop = (e, targetMusicId) => {
+    e.preventDefault();
+    const sourceMusicId = e.dataTransfer.getData('text/plain');
 
-    // Update the state with the new order
-    setAlbumDetails((prevDetails) => ({
-      ...prevDetails,
-      Music: updatedMusic,
-    }));
+    // Implement the logic to reorder music items based on source and target IDs
+    const reorderedMusicOrder = [...musicOrder];
+    const sourceIndex = reorderedMusicOrder.indexOf(sourceMusicId);
+    const targetIndex = reorderedMusicOrder.indexOf(targetMusicId);
+
+    // Swap the source and target music items
+    const movedItem = reorderedMusicOrder.splice(sourceIndex, 1)[0];
+    reorderedMusicOrder.splice(targetIndex, 0, movedItem);
+
+    // Update the state with the new music order
+    setMusicOrder([...reorderedMusicOrder]);
   };
 
   const handlePlayClick = (musicId) => {
@@ -67,36 +74,29 @@ const DetailsAlbum = () => {
 
           <div className="mt-8">
             <h3 className="text-xl font-bold mb-4">Album Music</h3>
-            <DragDropContext onDragEnd={onDragEnd}>
-              <Droppable droppableId="musicList">
-                {(provided) => (
-                  <div {...provided.droppableProps} ref={provided.innerRef}>
-                    {albumDetails.Music.map((music, index) => (
-                      <Draggable key={music.music_id} draggableId={music.music_id.toString()} index={index}>
-                        {(provided) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className="flex items-center justify-between p-4 bg-gray-700 bg-opacity-50 rounded-lg mb-2"
-                          >
-                            <div className="flex items-center">
-                              <FaPlay
-                                className="text-yellow-500 mr-4 cursor-pointer"
-                                onClick={() => handlePlayClick(music.music_id)}
-                              />
-                              {music.title}
-                            </div>
-                            <div>Drag</div>
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
+            <div
+              onDragOver={(e) => handleDragOver(e)}
+              onDrop={(e) => handleDrop(e, 'musicList')}
+            >
+              {musicOrder.map((musicId, index) => {
+                const music = albumDetails.Music.find((m) => m.music_id === musicId);
+                return (
+                  <div
+                    key={musicId}
+                    className="flex items-center justify-between p-4 bg-gray-700 bg-opacity-50 rounded-lg mb-2"
+                    draggable="true"
+                    onDragStart={(e) => handleDragStart(e, musicId)}
+                  >
+                    <FaPlay
+                      className="text-yellow-500 mr-4 cursor-pointer"
+                      onClick={() => handlePlayClick(music.music_id)}
+                    />
+                    {music.title}
+                    <div>Drag</div>
                   </div>
-                )}
-              </Droppable>
-            </DragDropContext>
+                );
+              })}
+            </div>
           </div>
 
           {selectedMusicId && (

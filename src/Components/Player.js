@@ -13,42 +13,29 @@ const Player = ({ musicArray, selectedMusicId, imageurl, onClose, roomId }) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Create a state variable to track whether the user has pressed the "seek" button
   const [seeking, setSeeking] = useState(false);
 
-  // Initialize Socket.io connection
   const socket = io(process.env.REACT_APP_BASE_URL);
 
-  // Event listener for 'play' event from the server
   socket.on('play', () => {
-    // Handle the 'play' event from the server
     setIsPlaying(true); // Update playback state
     console.log('Received play event from the server');
   });
 
-  // Event listener for 'pause' event from the server
   socket.on('pause', () => {
-    // Handle the 'pause' event from the server
     setIsPlaying(false); // Update playback state
     console.log('Received pause event from the server');
   });
 
-  // Event listener for 'changeTrack' event from the server
   socket.on('changeTrack', (trackId) => {
-    // Handle the 'changeTrack' event from the server
     console.log('Received changeTrack event from the server, Track ID:', trackId);
-    
-    // Add your logic to change the track here (if needed)
-    // For example, you can update the selected music index based on trackId
     const newIndex = musicArray.findIndex((music) => music.music_id === trackId);
     if (newIndex !== -1) {
       setSelectedMusicIndex(newIndex);
     }
   });
 
-  // Event listener for 'seek' event from the server
   socket.on('seek', (time) => {
-    // Update the current playback time only if not seeking
     if (!seeking) {
       setCurrentTime(time);
     }
@@ -61,16 +48,13 @@ const Player = ({ musicArray, selectedMusicId, imageurl, onClose, roomId }) => {
     );
   }, [musicArray, selectedMusicId]);
 
-  // Modify the handleSeek function to emit the "seek" event only when the button is pressed
+  
   const handleSeek = (time) => {
     if (seeking) {
-      // Emit a socket event for seeking with the roomId and current time
       socket.emit('seek', roomId, time);
 
-      // Update the current playback time
       setCurrentTime(time);
 
-      // Reset the seeking state after emitting the event
       setSeeking(false);
     }
   };
@@ -143,18 +127,13 @@ const Player = ({ musicArray, selectedMusicId, imageurl, onClose, roomId }) => {
       <AudioPlayer
         autoPlay
         src={selectedMusic.musicUrl || selectedMusic.url}
-        currentTime={currentTime} // Set the current playback time
+        currentTime={currentTime} 
         onListen={(e) => {
-          // Emit a socket event for seeking with the roomId and current time
-          // console.log(socket.connected)
-          // socket.emit('seek', roomId, e.target.currentTime);
-
-          // Update the current playback time only if not seeking
           if (!seeking) {
             setCurrentTime(e.target.currentTime);
           }
         }}
-        playing={isPlaying} // Set the playback state
+        playing={isPlaying} 
         showSkipControls={true}
         onClickPrevious={() => handleMusicChange('prev')}
         onClickNext={() => handleMusicChange('next')}
@@ -177,8 +156,6 @@ const Player = ({ musicArray, selectedMusicId, imageurl, onClose, roomId }) => {
         )}
         layout="stacked-reverse"
       />
-
-      {/* Add a "seek" button */}
       <button onClick={() => setSeeking(true)}>Seek</button>
     </div>
   );

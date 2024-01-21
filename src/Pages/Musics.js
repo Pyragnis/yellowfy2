@@ -19,6 +19,7 @@ const Musics = () => {
   const dispatch = useDispatch();
   const { roomId } = useSelector((state) => state.socket); // Get roomId from Redux store
   const searchQuery = useSelector((state) => state.search.searchQuery); // Get searchQuery from Redux store
+  const [musicOrder, setMusicOrder] = useState([]); // State to store the order of music
 
   const handlePlayClick = (musicId) => {
     setSelectedMusicId(musicId);
@@ -39,7 +40,31 @@ const Musics = () => {
         color: '#fff',
       },
     });
-    // setSelectedMusicId(null); // Clear selected music when leaving the room
+  };
+
+  const handleDragStart = (e, musicId) => {
+    e.dataTransfer.setData('text/plain', musicId);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e, targetMusicId) => {
+    e.preventDefault();
+    const sourceMusicId = e.dataTransfer.getData('text/plain');
+
+    // Implement the logic to reorder music items based on source and target IDs
+    const reorderedMusics = [...musics];
+    const sourceIndex = reorderedMusics.findIndex((music) => music.music_id === sourceMusicId);
+    const targetIndex = reorderedMusics.findIndex((music) => music.music_id === targetMusicId);
+
+    // Swap the source and target music items
+    const [movedItem] = reorderedMusics.splice(sourceIndex, 1);
+    reorderedMusics.splice(targetIndex, 0, movedItem);
+
+    setMusicOrder(reorderedMusics.map((music) => music.music_id));
+    setMusics(reorderedMusics);
   };
 
   useEffect(() => {
@@ -48,7 +73,9 @@ const Musics = () => {
         const response = await axios.get(
           `${process.env.REACT_APP_BASE_URL}/music`
         );
+        const musicIds = response.data.map((music) => music.music_id);
         setMusics(response.data);
+        setMusicOrder(musicIds); // Set the initial music order based on data
       } catch (error) {
         console.error('Error fetching music:', error);
       }
@@ -74,7 +101,6 @@ const Musics = () => {
   }, [selectedMusicId]);
 
   useEffect(() => {
-    console.log("i ran----------------")
     const handleUserJoinRoom = (data) => {
       toast.success(`User ${data.socketId} joined the room`, {
         icon: '👋',
@@ -93,8 +119,6 @@ const Musics = () => {
     });
 
     socket.on('roomUpdate', handleUserJoinRoom);
-
-    console.log('Listening for roomUpdate events');
 
     return () => {
       socket.off('roomUpdate', handleUserJoinRoom);
@@ -124,33 +148,40 @@ const Musics = () => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredMusics.map((music) => (
-            <div
-              key={music.music_id}
-              className="bg-gray-800 bg-opacity-80 p-4 rounded-lg"
-            >
-              <img
-                src={music.albumCoverImageUrl || 'default-cover-url.jpg'}
-                alt={music.title}
-                className="w-full h-40 object-cover rounded-md mb-2"
-              />
-              <h2 className="text-xl text-yellow-400">{music.title}</h2>
-              <p className="text-gray-300">Artist: {music.Artist?.name}</p>
-              <p className="text-gray-300">Album: {music.Album?.title}</p>
-              <p className="text-gray-300">Genre: {music.Album?.genre}</p>
-              <p className="text-gray-300">
-                Release Date:{' '}
-                {new Date(music.Album?.release_date).toLocaleDateString()}
-              </p>
-              <button
-                onClick={() => handlePlayClick(music.music_id)}
-                className="mt-2 bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 flex items-center"
+          {musicOrder.map((musicId, index) => {
+            const music = musics.find((m) => m.music_id === musicId);
+            return (
+              <div
+                key={musicId}
+                className="bg-gray-800 bg-opacity-80 p-4 rounded-lg"
+                draggable="true"
+                onDragStart={(e) => handleDragStart(e, musicId)}
+                onDragOver={(e) => handleDragOver(e)}
+                onDrop={(e) => handleDrop(e, musicId)}
               >
-                <FaPlay className="mr-2" />
-                Play
-              </button>
-            </div>
-          ))}
+                <img
+                  src={music.albumCoverImageUrl || 'default-cover-url.jpg'}
+                  alt={music.title}
+                  className="w-full h-40 object-cover rounded-md mb-2"
+                />
+                <h2 className="text-xl text-yellow-400">{music.title}</h2>
+                <p className="text-gray-300">Artist: {music.Artist?.name}</p>
+                <p className="text-gray-300">Album: {music.Album?.title}</p>
+                <p className="text-gray-300">Genre: {music.Album?.genre}</p>
+                <p className="text-gray-300">
+                  Release Date:{' '}
+                  {new Date(music.Album?.release_date).toLocaleDateString()}
+                </p>
+                <button
+                  onClick={() => handlePlayClick(music.music_id)}
+                  className="mt-2 bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 flex items-center"
+                >
+                  <FaPlay className="mr-2" />
+                  Play
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
       {selectedMusicId && (
